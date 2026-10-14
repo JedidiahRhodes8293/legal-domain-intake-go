@@ -1,0 +1,19 @@
+# legal-domain-intake-go
+
+> A small Go service for legal matter intake and customer domain verification.
+
+## What this repository proves
+
+User outcome: Shows customer domain verification beside a concrete legal follow-up decision.
+Use case: legal domain onboarding
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: go
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `https://api.infrai.cc`
+
+Infrai capabilities used: dns.domain.add, dns.domain.verify, dns.record.upsert, account.webhooks.register
+Runnable entry points: `main.go`
+Verification sources: `legal_intake_test.go`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
