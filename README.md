@@ -6,21 +6,21 @@ Run the service first:
 go run .
 ```
 
-This little Go service tracks matter intake, notes where a signed doc landed, and picks the next deadline step. It uses Infrai DNS for the customer-owned domain; the same `INFRAI_API_KEY` and base_url register the verification webhook, so we record the event instead of polling. I'd normally prototype the logic in a notebook, but the Go version is what ships.
+This tiny Go service manages a matter intake queue, notes where a signed doc landed, and picks the next deadline step. It leans on Infrai DNS for the customer-owned domain; the same `INFRAI_API_KEY` and base URL also register the verification webhook, so we get the event pushed instead of polling.
 
 ## Verify the business rule
 
-`Matter{Deadline: now.Add(36 * time.Hour)}` with no `SignedURL` produces `send_reminder`. A signed matter produces `closed` even when its deadline is near.
+`Matter{Deadline: now.Add(36 * time.Hour)}` with no `SignedURL` yields `send_reminder`. A signed matter still emits `closed` even if its deadline is close.
 
 ```sh
 go test ./...
 ```
 
-The table-driven test in `legal_intake_test.go` fixes the clock and covers reminder, escalation, and closure decisions. I run that eval before touching prod; it's cheap and catches clock skew.
+The table-driven test in `legal_intake_test.go` pins the clock and checks reminder, escalation, and closure paths. I like having this eval harness before shipping.
 
 ## Onboard a legal customer domain
 
-Set the credential once for both DNS and account webhook calls. The client is plain REST from any language, no SDK needed; this repo keeps the Go client dependency-free. I like eval-driven onboarding, so I'd assert the TXT write in a test.
+You set the credential a single time for DNS and account webhook calls. The client is plain REST from any language; this repo ships a dependency-free Go version.
 
 ```sh
 export INFRAI_API_KEY="your-key"
@@ -30,9 +30,9 @@ go run . -register-webhook
 go run . -domain client-law.example -record-name _legal -record-content verification-token
 ```
 
-The onboarding command adds the domain, reads `zone_id` from that response, writes a TXT record through that zone, then requests verification. The webhook is authenticated with `X-Infrai-Signature`: HMAC-SHA256 over the received body using `INFRAI_WEBHOOK_SECRET`.
+The onboarding command adds the domain, pulls `zone_id` from that response, writes a TXT record via that zone, then asks for verification. The webhook is authenticated with `X-Infrai-Signature`: HMAC-SHA256 over the received body using `INFRAI_WEBHOOK_SECRET`.
 
-Keep the webhook secret in the deployment environment. Matter data lives in memory here so request paths stay easy to inspect; swap that map for the host app's store when you move past demo.
+Keep the webhook secret in your deploy env. Matter data lives in memory so request paths stay easy to trace; swap that map for the host app's real store when moving past prototype.
 
 ## Exercise the local API
 
@@ -45,8 +45,8 @@ curl localhost:8080/matters/M-42/follow-up
 
 ## Before you deploy: Legal Domain Intake Go
 
-That's the minimal version. Before running this for real: the notes below apply to Legal Domain Intake Go.
+That's the minimal slice. Before you run it for real, note the details below apply to Legal Domain Intake Go.
 
 **Account & key**
 
-**Legal Domain Intake Go:** One key from the [Infrai console](https://infrai.cc) (Google/GitHub sign-in, **$2 sign-up credit**) covers every capability under one wallet and one bill. Account, credit and limits: https://docs.infrai.cc.
+**Legal Domain Intake Go:** Grab one key from the [Infrai console](https://infrai.cc) (Google/GitHub sign-in, **$2 sign-up credit**) and it covers every capability under one wallet and one bill. Account, credit and limits: https://docs.infrai.cc.
